@@ -10,7 +10,10 @@ const authReducer = (state, action) => {
         case 'ADD_ERROR':
             return { ...state, errorMessage: payload }
         case 'SIGNUP':
+        case 'SIGNIN':
             return { ...state, errorMessage: '', token: payload }
+        case 'CLEAR_ERROR':
+            return { ...state, errorMessage: '' }
         default:
             return state;
     }
@@ -19,10 +22,8 @@ const authReducer = (state, action) => {
 const signup = dispatch => async({ email, password }) => {
     try {
         const response = await trackerApi.post('/signup', { email, password });
-        console.log(email, password);
         await AsyncStorage.setItem('token', response.data.token);
         dispatch({ type: 'SIGNUP', payload: response.data.token });
-
         navigate('TrackList');        
     } catch (err) {
         console.log(email, password);
@@ -30,15 +31,23 @@ const signup = dispatch => async({ email, password }) => {
     }
 };
 
-const signin = distpach => { 
-    return async({ email, password }) => {
-        // Try to signin
-
-        // Handle success by updating state
-
-        // Handle failure by showing error message
+const signin = dispatch => async({ email, password }) => {
+    try {
+        const response = await trackerApi.post('/signin', { email, password });
+        await AsyncStorage.setItem('token', response.data.token);
+        dispatch({ type: 'SIGNIN', payload: response.data.token });
+        navigate('TrackList');  
+    } catch (err) {
+        distpach({
+            type: 'ADD_ERROR',
+            payload: 'Something went wrong!'
+        })
     }
 }
+
+const clearErrorMessage = dispatch => () => {
+    dispatch({ type: 'CLEAR_ERROR' })
+};
 
 const signout = dispatch => {
     return async() => {
@@ -48,7 +57,7 @@ const signout = dispatch => {
 
 export const { Provider, Context } = createDataContext(
     authReducer,
-    { signin, signup, signout },
+    { signin, signup, signout, clearErrorMessage },
     {
         isSignedIn: false,
         errorMessage: ''
